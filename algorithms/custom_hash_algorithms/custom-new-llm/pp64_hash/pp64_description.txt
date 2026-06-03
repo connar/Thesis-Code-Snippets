@@ -1,0 +1,6 @@
+pp64_hash is a Prime-pervasive hash algorithm.
+[+] It initializes a standard 64-bit hash state but introduces a secondary state variable: a dynamic prime multiplier. Characters are normalized to uppercase.
+
+[+] The hash state is XORed with the character and multiplied by the prime. However, unlike standard algorithms (like djb2), the prime itself mutates during each iteration. The new prime is calculated by adding the character value and the upper 32 bits of the current hash state, followed by a bitwise OR to ensure the multiplier remains odd.
+
+[+] Finally, it uses a standard XOR-fold and final constant multiplication to ensure high entropy.

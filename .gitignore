@@ -1,0 +1,6 @@
+# Ignore compiled executables
+*.exe
+
+# Ignore Python cache
+__pycache__/
+*.pyc

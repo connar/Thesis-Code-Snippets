@@ -1,0 +1,19 @@
+1. na xrisimopoiow prime gia modulo kai g genitora
+2. Sbox kai pbox -> na kanw mimic px ton aes. Auta kanoun diffusion (kai confusion..?)
+3. Na peiraksw tous eidh algorithmous gia na kalupsw to modification kommati
+
+ara:
+- kaluptw auta poy uparxoun hdh ws algorithmoi sto hashdb
+- kanw modification tous algorithmous pou hparxoun hdh (px na peiraksw enan arithmo)
+- kanw custom opws eipa panw me autes tis idiotites ( gia na exw epixeirima giati einai hash function kai oxi random mathimatika)
+
+
+Na dw auto:
+https://stevehanov.ca/blog/?id=119
+Ayto leei gia to minimal perfect hashing, poy einai mia texnikh poy den exei collisions an ksereis apo prin ola ta keys poy tha xrisimopoihseis, kai efoson emeis kanoyme api hashing, kseroyme poia einai ta keys (ta windows api names) opote auto mas kanei!
+
+also this:
+https://medium.com/@tom_84912/inside-the-quirky-world-of-hashing-2f67d214a7a7
+genika paizoun polles sunartiseis online poy tha mporousa na tropopoihsw
+
+erwtima einai pws to hashdb kanei resolve ta hashes den exw katalavei. Kanei emulate ton algorithmo? milaei me kapoia vash twn oalabs poy den mporw na dw sto github? ti paizei apo pisw?

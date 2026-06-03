@@ -1,0 +1,6 @@
+XSA-32 is a Xor-shift-add algorithm.
+[+] Starts with an arbitrary 32-bit magic number and normalizes string characters to lowercase.
+
+[+] Designed to mimic highly optimized, size-constrained shellcode. It completely avoids expensive CPU multiplication instructions. Instead, it diffuses the character value through a sequence of addition followed by non-linear bit-shifts (left 13, right 17, left 5) combined with XOR operations.
+
+[+] Finally, it utilizes an addition-shift and XOR-shift sequence to scramble the final state.

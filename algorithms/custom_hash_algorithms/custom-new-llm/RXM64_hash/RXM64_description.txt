@@ -1,0 +1,6 @@
+RXM64 is a rotate-xor-multiply algorithm.  
+[+] It begins with a 640-bit offset basis (similar to FNV-1a) and normalizes all characters to upperchase to conform to standard Windows loader behavior.
+
+[+] It incorporates each character using a three-step mutation: Xoring the character byte, multiplying by a static 64-bit prime, and applying a 13-bit right rotation. The rotation is specifically included to test the LLM's ability to correctly translate bitwise circular shifts into standard code. 
+
+[+] The final thing is the employment of a Murmur3-inspired finalization routine using heavy bit-folding (XORing the state with right-shifted versions of itself) and large constant multiplications. This ensures that changes to the final characters of a string cascade across the entire 64-bit integer, eliminating collisions between similarly named APIs (e.g. CreateFilea vs CreateFileW).
