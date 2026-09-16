@@ -55,11 +55,11 @@ The filename must match the public class name inside the file, or compilation
 fails with *"The class could not be found."*
 
 **2. Open the sample.** In Ghidra, create or open a project, then
-**File → Import File**, select the sample, and accept the PE loader. Double-click
+**File -> Import File**, select the sample, and accept the PE loader. Double-click
 the imported file to open the CodeBrowser window, and let auto-analysis finish
 before running anything.
 
-**3. Run.** Open **Window → Script Manager**, click the refresh button (two green
+**3. Run.** Open **Window -> Script Manager**, click the refresh button (two green
 arrows) so Ghidra picks up the new file, locate the script under the *Thesis*
 category, and click the green Run button. Output appears in the console pane at
 the bottom of the CodeBrowser window.
@@ -76,7 +76,7 @@ into `ghidra_scripts` from the command line avoids this.
 
 ---
 
-## Pilot A — isolated emulation
+## Pilot A - isolated emulation
 
 **Question.** Does emulating a real resolver with no process environment fail, and
 if so, how?
@@ -120,7 +120,7 @@ emulator has no segment base, so the read returns zero. The null check at
 instruction 10 fires and the function returns without ever reaching the module
 list.
 
-The important detail is the *mode* of failure. The function does not crash — it
+The important detail is the *mode* of failure. The function does not crash - it
 executes a normal `RET` and returns zero. That result is indistinguishable from
 "this hash matches no candidate." An analyst using isolated emulation on such a
 resolver gets no indication that the missing environment, rather than the hash,
@@ -131,7 +131,7 @@ detected from the output alone.
 
 ---
 
-## Pilot B — module-list provisioning
+## Pilot B - module-list provisioning
 
 **Question.** Does provisioning a minimal process environment make the same
 resolver work, and how much memory does it take?
@@ -139,7 +139,7 @@ resolver work, and how much memory does it take?
 **Method.** Two stages.
 
 Stage 1 emulates the sample's own hash function on the string `"kernel32.dll"` to
-obtain a target hash. No hash database or hardcoded constant is used — the sample
+obtain a target hash. No hash database or hardcoded constant is used - the sample
 acts as its own oracle.
 
 Stage 2 writes a PEB (only `+0x0c`, the loader-data pointer), a `PEB_LDR_DATA`
@@ -147,6 +147,32 @@ Stage 2 writes a PEB (only `+0x0c`, the loader-data pointer), a `PEB_LDR_DATA`
 their `DllBase` and `BaseDllName` fields, and two UTF-16 name strings. The single
 call to the PEB-access helper is intercepted and answered with the synthesised PEB
 address. The resolver is then run against the stage-1 hash.
+
+Only the fields the resolver actually reads are written. Everything else in these
+structures is left unmapped:
+
+```
+  PEB  0x7EFDE000
+    +0x0c  Ldr ------------> PEB_LDR_DATA  0x7EFDE200
+                               +0x14  InMemoryOrderModuleList
+                                        Flink ---> entry 1
+                                        Blink ---> entry 2
+
+  entry 1  0x7EFDE300                    entry 2  0x7EFDE400
+    +0x00  Flink ---> entry 2              +0x00  Flink ---> list head
+    +0x04  Blink ---> list head            +0x04  Blink ---> entry 1
+    +0x10  DllBase   0x71000000            +0x10  DllBase   0x77000000
+    +0x24  Name.Length  24                 +0x24  Name.Length  18
+    +0x28  Name.Buffer ---> 0x7EFDE500     +0x28  Name.Buffer ---> 0x7EFDE560
+
+  0x7EFDE500   L"kernel32.dll"
+  0x7EFDE560   L"ntdll.dll"
+```
+
+Entry offsets are relative to the `InMemoryOrderLinks` field, which is where the
+list pointers land, not to the start of the `LDR_DATA_TABLE_ENTRY` structure.
+The list is circular: entry 2's `Flink` points back at the head, which is what
+terminates the resolver's loop.
 
 **Result.**
 
@@ -170,14 +196,14 @@ MATCH - correct module base returned
 **What it means.** 98 bytes of synthesised process state, plus one intercepted
 call, convert a silent failure into a correct resolution. The structures are
 synthesised rather than copied because a PEB is a runtime artefact with no
-on-disk form; the *data* inside them — module names — is real.
+on-disk form; the *data* inside them - module names - is real.
 
 This is the lower bound on provisioning cost for a resolver that walks the module
 list. It does not cover export parsing, which Pilot C measures.
 
 ---
 
-## Pilot C — real export table
+## Pilot C - real export table
 
 **Question.** Can the API-resolution stage work against a real export table mapped
 from disk, without any candidate list, and at what cost?
@@ -257,7 +283,7 @@ Two properties matter:
 The architecture's central assumption holds. A resolver that returns nothing under
 isolated emulation resolves correctly once a minimal environment is provisioned,
 and the cost is bounded at tens of kilobytes within a single static-analysis
-process — several orders of magnitude below emulators that boot a full operating
+process - several orders of magnitude below emulators that boot a full operating
 system to execute one function.
 
 ---
@@ -271,7 +297,7 @@ emulation endpoint in the GhidraMCP project:
 | Input | This pilot | Independent endpoint | Steps |
 |---|---|---|---|
 | `"kernel32.dll"` (UTF-16, 12 chars) | `0x6AE69F02` | `0x6AE69F02` | 2,061 |
-| `"ntdll.dll"` (UTF-16, 9 chars) | — | `0x84C05E40` | 1,554 |
+| `"ntdll.dll"` (UTF-16, 9 chars) | - | `0x84C05E40` | 1,554 |
 
 Both agree exactly. The hash for `"ntdll.dll"` matches a module-hash constant found
 at the sample's call sites, independently confirming the module identification.
