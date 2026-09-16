@@ -32,8 +32,47 @@ results were known in advance. Its resolver operates in two stages:
 | `FUN_00407990` | the hash function, called by both |
 | `FUN_00413C70` | returns the PEB pointer by reading `FS:[0x30]` |
 
-To run: copy the `.java` file into `%USERPROFILE%\ghidra_scripts`, open the sample
-in Ghidra, then Script Manager → refresh → Run.
+---
+
+## Running the scripts
+
+These are standard Ghidra scripts written in Java. Java is used rather than Python
+because Ghidra 12.x does not enable a Python interpreter by default: Jython is an
+optional extension, and PyGhidra requires launching Ghidra through a separate
+script with a Python 3 interpreter on the path. Java scripts run with no
+additional setup.
+
+**1. Install the script.** Copy the `.java` file into Ghidra's user script
+directory:
+
+```powershell
+Copy-Item PilotA.java "$env:USERPROFILE\ghidra_scripts\PilotA.java" -Force
+```
+
+On Linux or macOS the directory is `~/ghidra_scripts`.
+
+The filename must match the public class name inside the file, or compilation
+fails with *"The class could not be found."*
+
+**2. Open the sample.** In Ghidra, create or open a project, then
+**File → Import File**, select the sample, and accept the PE loader. Double-click
+the imported file to open the CodeBrowser window, and let auto-analysis finish
+before running anything.
+
+**3. Run.** Open **Window → Script Manager**, click the refresh button (two green
+arrows) so Ghidra picks up the new file, locate the script under the *Thesis*
+category, and click the green Run button. Output appears in the console pane at
+the bottom of the CodeBrowser window.
+
+**4. Adjust addresses if needed.** Each script hardcodes the function addresses of
+the sample it was written for. If a different build is used, the addresses will
+differ; the constants are grouped at the top of each file for that reason. Pilot C
+additionally verifies that an instruction exists at the configured address and
+reports the image base if it does not.
+
+**Editing note.** Pasting long scripts into Ghidra's built-in editor can silently
+truncate them, producing *"reached end of file while parsing."* Copying the file
+into `ghidra_scripts` from the command line avoids this.
 
 ---
 
@@ -143,9 +182,29 @@ list. It does not cover export parsing, which Pilot C measures.
 **Question.** Can the API-resolution stage work against a real export table mapped
 from disk, without any candidate list, and at what cost?
 
-**Method.** Map two regions of a real `ntdll.dll` at a synthesised base address:
-the PE headers, and the export data region identified by
-`DataDirectory[0]`. Then call `FUN_00401000(base, 0x183679F2)`.
+**Prerequisite.** This script reads a real system library from disk. Ghidra does
+not supply one, so a copy must be placed where the script expects it. The path is
+set by the `DLL_PATH` constant at the top of `PilotC.java`, which defaults to
+`C:\dll_corpus\x86\ntdll.dll`:
+
+```powershell
+New-Item -ItemType Directory -Force -Path C:\dll_corpus\x86
+Copy-Item C:\Windows\SysWOW64\ntdll.dll C:\dll_corpus\x86\
+Get-FileHash -Algorithm SHA256 C:\dll_corpus\x86\ntdll.dll
+```
+
+The **SysWOW64** copy is required, not the System32 one. The sample is a 32-bit
+binary and resolves against 32-bit libraries; the script rejects a 64-bit PE and
+reports why. On a 64-bit host, `C:\Windows\System32` holds the 64-bit libraries
+and `C:\Windows\SysWOW64` holds the 32-bit ones.
+
+Record the hash of whichever copy is used. Export tables differ between Windows
+builds, so the resolved address depends on the exact library version, and the
+result is only reproducible if that version is known.
+
+**Method.** Map two regions of the library at a synthesised base address: the PE
+headers, and the export data region identified by `DataDirectory[0]`. Then call
+`FUN_00401000(base, 0x183679F2)`.
 
 The hash `0x183679F2` is a constant taken from the sample's own call sites. The
 expected answer is computed independently by parsing the export table directly in
