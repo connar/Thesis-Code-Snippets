@@ -22,6 +22,21 @@ resolver succeed at a cost far below full-system emulation.
 | Emulator | `EmulatorHelper` (Ghidra P-code) |
 | DLL corpus | `C:\dll_corpus\x86\ntdll.dll`, copied from `C:\Windows\SysWOW64` |
 
+The library version matters. An export table's contents differ between Windows
+builds, so the address a resolver returns depends on which copy was mapped. The
+results below were produced with:
+
+| | |
+|---|---|
+| File | `ntdll.dll` (32-bit, from `C:\Windows\SysWOW64`) |
+| Version | 10.0.26100.9444 (WinBuild.160101.0800) |
+| SHA-256 | `7E15BD30890E9BF93B47FC894A68B2445618EE7528EB39584A263B21E112F9DF` |
+
+Running Pilot C against a different build will return a different address for
+`LdrLoadDll`. That is expected, not a failure: the script parses the mapped
+library's export table independently and checks the resolver against whatever
+address that library actually assigns.
+
 The sample was reverse-engineered independently before the pilot, so the expected
 results were known in advance. Its resolver operates in two stages:
 
