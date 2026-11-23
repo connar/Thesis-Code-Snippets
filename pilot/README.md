@@ -1,8 +1,6 @@
 # Feasibility Pilot
 
-Supporting material for the MSc thesis *Automating Malware Deobfuscation: An
-Evaluation of LLM-Guided Logic Extraction and Execution* (Angelos Solomos,
-TU Eindhoven).
+Supporting material for the tool development of the MSc Thesis.
 
 These three experiments test the central assumption of the proposed architecture
 before implementation: that emulating a resolver in isolation fails on real
